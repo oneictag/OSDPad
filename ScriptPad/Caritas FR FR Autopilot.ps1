@@ -285,10 +285,10 @@ $UnattendXml = @'
     </settings>
     <settings pass="oobeSystem">
         <component name="Microsoft-Windows-International-Core" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
-            <InputLocale>de-CH</InputLocale>
-            <SystemLocale>de-DE</SystemLocale>
-            <UILanguage>de-DE</UILanguage>
-            <UserLocale>de-CH</UserLocale>
+            <InputLocale>fr-CH</InputLocale>
+            <SystemLocale>fr-CH</SystemLocale>
+            <UILanguage>fr-CH</UILanguage>
+            <UserLocale>fr-CH</UserLocale>
         </component>
     </settings>
 </unattend>
