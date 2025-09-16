@@ -119,8 +119,8 @@ Write-SectionHeader "[PreOS] Define OSDCloud Global And Customer Parameters"
 #=======================================================================
 $Global:WPNinjaCH   = $null
 $Global:WPNinjaCH   = [ordered]@{
-    Development     = [bool]$true
-    TestGroup       = [bool]$true
+    Development     = [bool]$false
+    TestGroup       = [bool]$false
 }
 Write-SectionHeader "WPNinjaCH variables"
 Write-Host ($Global:WPNinjaCH | Out-String)
@@ -294,13 +294,13 @@ REM Execute OOBE Tasks
 start /wait powershell.exe -NoL -ExecutionPolicy Bypass -F C:\Windows\Setup\Scripts\AP-Prereq.ps1
 
 REM Execute OOBE Tasks
-start /wait powershell.exe -NoL -ExecutionPolicy Bypass -F C:\Windows\Setup\Scripts\start-autopilotoobe.ps1
+REM start /wait powershell.exe -NoL -ExecutionPolicy Bypass -F C:\Windows\Setup\Scripts\start-autopilotoobe.ps1
 
 REM Execute OSD Gather Script
 REM start /wait powershell.exe -NoL -ExecutionPolicy Bypass -F C:\Windows\Setup\Scripts\osdgather.ps1
 
 REM Execute Cleanup Script
-start /wait powershell.exe -NoL -ExecutionPolicy Bypass -F C:\Windows\Setup\Scripts\cleanup.ps1
+REM start /wait powershell.exe -NoL -ExecutionPolicy Bypass -F C:\Windows\Setup\Scripts\cleanup.ps1
 
 REM Below a PS session for debug and testing in system context, # when not needed 
 REM start /wait powershell.exe -NoL -ExecutionPolicy Bypass
