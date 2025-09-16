@@ -345,10 +345,10 @@ Write-DarkGrayHost "Copying PFX file"
 Copy-Item X:\OSDCloud\Config\Scripts C:\OSDCloud\ -Recurse -Force
 #endregion
 
-Write-DarkGrayHost "Disabling Shift F10 in OOBE for security Reasons"
-$Tagpath = "C:\Windows\Setup\Scripts\DisableCMDRequest.TAG"
-New-Item -ItemType file -Force -Path $Tagpath | Out-Null
-Write-DarkGrayHost "Shift F10 disabled now!"
+# Write-DarkGrayHost "Disabling Shift F10 in OOBE for security Reasons"
+# $Tagpath = "C:\Windows\Setup\Scripts\DisableCMDRequest.TAG"
+# New-Item -ItemType file -Force -Path $Tagpath | Out-Null
+# Write-DarkGrayHost "Shift F10 disabled now!"
 
 #region Development
 if ($Global:WPNinjaCH.Development -eq $true){
