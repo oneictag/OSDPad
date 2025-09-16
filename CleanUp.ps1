@@ -22,6 +22,7 @@ If (Test-Path -Path 'C:\Temp') {
 If (Test-Path -Path 'C:\OSDCloud') { Remove-Item -Path 'C:\OSDCloud' -Recurse -Force }
 If (Test-Path -Path 'C:\Drivers') { Remove-Item 'C:\Drivers' -Recurse -Force }
 If (Test-Path -Path 'C:\Intel') { Remove-Item 'C:\Intel' -Recurse -Force }
+If (Test-Path -Path 'C:\Service') { Remove-Item 'C:\Service' -Recurse -Force }
 If (Test-Path -Path 'C:\ProgramData\OSDeploy') { Remove-Item 'C:\ProgramData\OSDeploy' -Recurse -Force }
 
 # Cleanup Scripts
