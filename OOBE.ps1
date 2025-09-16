@@ -323,7 +323,7 @@ Step-oobeRemoveAppxPackage
 Step-oobeAddCapability
 Step-oobeUpdateDrivers
 Step-oobeUpdateWindows
-Invoke-Webhook
+# Invoke-Webhook
 Step-oobeRestartComputer
 Step-oobeStopComputer
 #=================================================

@@ -15,19 +15,23 @@
 
 .NOTES
     Version:		0.1
-    Creation Date:  23.04.2025
-    Author:			Akos Bakos
-    Company:        SmartCon GmbH
-    Contact:		akos.bakos@smartcon.ch
+    Creation Date:  16.09.2025
+    Author:			Jorga Wetzel
+    Company:        oneICT AG
+    Contact:		wetzel@oneict.ch
 
-    Copyright (c) 2025 SmartCon GmbH
+    Copyright (c) 2025 oneICT AG
 
 HISTORY:
-Date			By			Comments
-----------		---			----------------------------------------------------------
-23.04.2025		Akos Bakos	Script created
+Date			By				Comments
+----------		---				----------------------------------------------------------
+16.09.2025		Jorga Wetzel	Script created
 
 #>
+
+$ScriptName = 'Caritas.ps1'
+$ScriptVersion = '16.09.2025'
+Write-Host -ForegroundColor Green "$ScriptName $ScriptVersion"
 
 if (-NOT (Test-Path 'X:\OSDCloud\Logs')) {
     New-Item -Path 'X:\OSDCloud\Logs' -ItemType Directory -Force -ErrorAction Stop | Out-Null
@@ -147,17 +151,18 @@ if ($Global:OSDCloud.ApplyCatalogFirmware -eq $true) {
 #=======================================================================
 Write-SectionHeader "[OS] Params and Start-OSDCloud"
 #=======================================================================
-$Params = @{
-    OSVersion   = "Windows 11"
-    OSBuild     = "24H2"
-    OSEdition   = "Pro"
-    OSLanguage  = "en-us"
-    OSLicense   = "Retail"
+Import-Module OSD -Force
+$wim = 'D:\OSDCloud\OS\Win11_24H2_MUI.wim'
+$Global:MyOSDCloud = @{
+	ImageFileFullName = $wim
+	ImageFileItem     = Get-Item $wim
+	ImageFileName     = [IO.Path]::GetFileName($wim)
+	OSImageIndex      = 1
     ZTI         = $true
     Firmware    = $true
 }
-Write-Host ($Params | Out-String)
-Start-OSDCloud @Params
+Write-Output ($Global:MyOSDCloud | Out-String)
+Invoke-OSDCloud
 #endregion
 
 #region Autopilot Tasks
@@ -209,8 +214,10 @@ else {
 
 # Device assignment
 if ($Global:WPNinjaCH.TestGroup -eq $true){
-    Write-DarkGrayHost "Adding device to AZ_COM_TEST Group"
-    $AddToGroup = "AZ_COM_TST"
+    Write-DarkGrayHost "Adding device to Intune_DE_Device
+ Group"
+    $AddToGroup = "Intune_DE_Device
+"
 }
 else {
     Write-DarkGrayHost "Adding device to AZ_COM_PRD Group"
