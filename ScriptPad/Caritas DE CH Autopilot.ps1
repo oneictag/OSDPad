@@ -220,8 +220,8 @@ if ($Global:WPNinjaCH.TestGroup -eq $true){
 "
 }
 else {
-    Write-DarkGrayHost "Adding device to AZ_COM_PRD Group"
-    $AddToGroup = "AZ_COM_PRD"
+    Write-DarkGrayHost "Adding device to Intune_DE_Device Group"
+    $AddToGroup = "Intune_DE_Device"
 }
 
 Write-Host -ForegroundColor Yellow "Computername: $AssignedComputerName"
