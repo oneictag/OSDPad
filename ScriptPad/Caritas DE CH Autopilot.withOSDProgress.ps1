@@ -69,10 +69,10 @@ try {
     Import-Module OSDProgress -Force
 
     if (Test-Path $TemplatePath) {
-        Invoke-OSDProgress -Style Win10 -TemplateFile $TemplatePath
+        Invoke-OSDProgress -Style Win11 -TemplateFile $TemplatePath
     }
     else {
-        Invoke-OSDProgress -Style Win10 -Title 'Caritas Deployment' -Subtitle 'OSDCloud · oneICT'
+        Invoke-OSDProgress -Style Win11 -Title 'Caritas Deployment' -Subtitle 'OSDCloud · oneICT'
     }
     $global:CaritasOSDProgressStarted = $true
     Update-OSDProgress -Phase 1 -DisplayBar -Text 'Vorbereitung...'
