@@ -56,8 +56,69 @@ Write-Host -ForegroundColor Cyan "[PreOS] Update Module"
 Write-Host -ForegroundColor DarkGray "$((Get-Date).ToString('yyyy-MM-dd-HHmmss')) " -NoNewline
 Write-Host -ForegroundColor Green "Importing OSD PowerShell Module"
 Import-Module OSD -Force
+
 # ================= OSDProgress Start (Caritas) =================
 # Ordner sicher erstellen
+# --- Robust OSDProgress Loader for WinPE/OSD ---
+
+# 1) TLS 1.2 sicherstellen
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
+# 2) Uhrzeit grob korrigieren (best effort), damit Code-Signaturen nicht scheitern
+try {
+    $t = (Invoke-RestMethod -Uri 'https://worldtimeapi.org/api/ip' -TimeoutSec 5).utc_datetime
+    if ($t) { Set-Date (Get-Date $t) -ErrorAction SilentlyContinue }
+} catch {}
+
+# 3) Execution Policy nur fuer diese Session lockern
+try { Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force } catch {}
+
+# 4) PSGallery vertrauen & NuGet-Provider sicherstellen
+try {
+    if (-not (Get-PSRepository -Name PSGallery -ErrorAction SilentlyContinue)) {
+        Register-PSRepository -Name PSGallery -InstallationPolicy Trusted `
+            -SourceLocation 'https://www.powershellgallery.com/api/v2' `
+            -ScriptSourceLocation 'https://www.powershellgallery.com/api/v2' `
+            -PackageManagementProvider NuGet
+    } else {
+        Set-PSRepository PSGallery -InstallationPolicy Trusted
+    }
+} catch {}
+
+# 5) OSDProgress installieren (mit Fallback)
+$OSDProgLoaded = $false
+try {
+    Install-Module OSDProgress -Force -Scope AllUsers -AllowClobber -SkipPublisherCheck -ErrorAction Stop
+    Import-Module  OSDProgress -Force -ErrorAction Stop
+    $OSDProgLoaded = $true
+} catch {
+    Write-Host "Install-Module OSDProgress scheitert: $($_.Exception.Message)" -ForegroundColor Yellow
+    # Fallback: Portable-Import direkt aus GitHub (ohne Katalogprüfung)
+    try {
+        $tmp = Join-Path $env:TEMP 'OSDProgress.Portable'
+        New-Item $tmp -ItemType Directory -Force | Out-Null
+        Invoke-WebRequest 'https://raw.githubusercontent.com/OSDeploy/OSDProgress/main/OSDProgress.psd1' -OutFile (Join-Path $tmp 'OSDProgress.psd1') -UseBasicParsing
+        Invoke-WebRequest 'https://raw.githubusercontent.com/OSDeploy/OSDProgress/main/OSDProgress.psm1' -OutFile (Join-Path $tmp 'OSDProgress.psm1') -UseBasicParsing
+        Import-Module (Join-Path $tmp 'OSDProgress.psd1') -Force
+        $OSDProgLoaded = $true
+        Write-Host "OSDProgress via Portable-Import geladen." -ForegroundColor Green
+    } catch {
+        Write-Host "Auch Portable-Import fehlgeschlagen: $($_.Exception.Message)" -ForegroundColor Red
+    }
+}
+
+# 6) Nur wenn geladen, dein Progress starten
+if ($OSDProgLoaded) {
+    $Template = 'C:\Service\OSDCaritas\Config\Caritas.OSDProgress.psd1'
+    if (Test-Path $Template) {
+        Invoke-OSDProgress -Style Win10 -TemplateFile $Template
+    } else {
+        Invoke-OSDProgress -Style Win10 -Title 'Caritas Deployment' -Subtitle 'OSDCloud · oneICT'
+    }
+    Update-OSDProgress -Phase 1 -DisplayBar -Text 'Vorbereitung...'
+} else {
+    Write-Host "OSDProgress steht nicht zur Verfuegung – fahre ohne Overlay fort." -ForegroundColor Yellow
+}
 New-Item "C:\Service\OSDCaritas\Config" -ItemType Directory -Force | Out-Null
 $logoURL     = 'https://raw.githubusercontent.com/oneictag/OSDPad/main/Caritas_Schweiz_Logo_rot-weiss.png'
 $templateURL = 'https://raw.githubusercontent.com/oneictag/OSDPad/main/Caritas.OSDProgress.psd1'
