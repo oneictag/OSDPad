@@ -57,7 +57,7 @@ Write-Host -ForegroundColor DarkGray "$((Get-Date).ToString('yyyy-MM-dd-HHmmss')
 Write-Host -ForegroundColor Green "Importing OSD PowerShell Module"
 Import-Module OSD -Force
 # ================= OSDProgress Start (Caritas) =================
-
+New-Item "C:\Service\OSDCaritas\Config" -ItemType Directory -Force | Out-Null
 Invoke-RestMethod https://github.com/oneictag/OSDPad/blob/main/Caritas_Schweiz_Logo_rot-weiss.png | Out-File -FilePath 'C:\Service\OSDCaritas\Config\Caritas_Schweiz_Logo_weiss.png' -Encoding ascii -Force
 Invoke-RestMethod https://github.com/oneictag/OSDPad/blob/main/Caritas.OSDProgress.psd1 | Out-File -FilePath 'C:\Service\OSDCaritas\Config\Caritas.OSDProgress.psd1' -Encoding ascii -Force
 
