@@ -203,9 +203,6 @@ $AutopilotOOBEJson = @"
                 },
         "GroupTag":  "$GroupTag",
         "Hidden":  [
-                    "AddToGroup",
-                    "AssignedUser",
-                    "PostAction",
                     "GroupTag",
                     "Assign"
                 ],
@@ -280,6 +277,7 @@ Write-DarkGrayHost "Downloading Scripts for OOBE and specialize phase"
 Invoke-RestMethod https://raw.githubusercontent.com/oneictag/OSDPad/refs/heads/main/Autopilot.ps1 | Out-File -FilePath 'C:\Windows\Setup\scripts\autopilot.ps1' -Encoding ascii -Force
 Invoke-RestMethod https://raw.githubusercontent.com/oneictag/OSDPad/refs/heads/main/OOBE.ps1 | Out-File -FilePath 'C:\Windows\Setup\scripts\oobe.ps1' -Encoding ascii -Force
 Invoke-RestMethod https://raw.githubusercontent.com/oneictag/OSDPad/refs/heads/main/CleanUp.ps1 | Out-File -FilePath 'C:\Windows\Setup\scripts\cleanup.ps1' -Encoding ascii -Force
+Invoke-RestMethod https://start-autopilotoobe.osdcloud.ch | Out-File -FilePath 'C:\Windows\Setup\scripts\cleanup.ps1' -Encoding ascii -Force
 #Invoke-RestMethod http://osdgather.osdcloud.ch | Out-File -FilePath 'C:\Windows\Setup\scripts\osdgather.ps1' -Encoding ascii -Force
 
 $OOBEcmdTasks = @'
@@ -309,9 +307,9 @@ Copy-Item X:\OSDCloud\Config\Scripts C:\OSDCloud\ -Recurse -Force
 #endregion
 
 # Write-DarkGrayHost "Disabling Shift F10 in OOBE for security Reasons"
-# $Tagpath = "C:\Windows\Setup\Scripts\DisableCMDRequest.TAG"
-# New-Item -ItemType file -Force -Path $Tagpath | Out-Null
-# Write-DarkGrayHost "Shift F10 disabled now!"
+$Tagpath = "C:\Windows\Setup\Scripts\DisableCMDRequest.TAG"
+New-Item -ItemType file -Force -Path $Tagpath | Out-Null
+Write-DarkGrayHost "Shift F10 disabled now!"
 
 #region Development
 if ($Global:WPNinjaCH.Development -eq $true){
