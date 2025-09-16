@@ -38,6 +38,118 @@ if (-NOT (Test-Path 'X:\OSDCloud\Logs')) {
 }
 
 #Transport Layer Security (TLS) 1.2
+
+# ===== WinForms Progress Overlay (works in WinPE, no WPF needed) =====
+Add-Type -AssemblyName System.Windows.Forms
+Add-Type -AssemblyName System.Drawing
+$global:__OSD_Form = $null
+$global:__OSD_Label = $null
+$global:__OSD_Bar = $null
+$global:__OSD_Timer = $null
+$global:WinFormsOverlayStarted = $false
+
+function Start-OSDWinPEProgress {
+    param(
+        [string]$Title = 'Caritas Deployment',
+        [string]$Subtitle = 'OSDCloud · oneICT',
+        [string]$ImagePath = 'C:\Service\OSDCaritas\Config\splash.jpg'  # optional
+    )
+    try {
+        if ($global:__OSD_Form) { return }
+        $form = New-Object System.Windows.Forms.Form
+        $form.Text = $Title
+        $form.StartPosition = 'CenterScreen'
+        $form.FormBorderStyle = 'None'
+        $form.WindowState = 'Maximized'
+        $form.TopMost = $true
+        $form.BackColor = [System.Drawing.Color]::FromArgb(0x1F,0x4C,0x7F)
+
+        if (Test-Path $ImagePath) {
+            $img = [System.Drawing.Image]::FromFile($ImagePath)
+            $pb  = New-Object System.Windows.Forms.PictureBox
+            $pb.Dock = 'Fill'
+            $pb.Image = $img
+            $pb.SizeMode = 'StretchImage'
+            $form.Controls.Add($pb)
+        }
+
+        $panel = New-Object System.Windows.Forms.Panel
+        $panel.BackColor = [System.Drawing.Color]::FromArgb(120, 0, 0, 0)
+        $panel.Dock = 'Bottom'
+        $panel.Height = 180
+        $form.Controls.Add($panel)
+        $panel.BringToFront()
+
+        $labelTitle = New-Object System.Windows.Forms.Label
+        $labelTitle.ForeColor = [System.Drawing.Color]::White
+        $labelTitle.Font = New-Object System.Drawing.Font('Segoe UI', 18, [System.Drawing.FontStyle]::Bold)
+        $labelTitle.Dock = 'Top'
+        $labelTitle.Height = 50
+        $labelTitle.TextAlign = 'MiddleCenter'
+        $labelTitle.Text = $Subtitle
+        $panel.Controls.Add($labelTitle)
+
+        $label = New-Object System.Windows.Forms.Label
+        $label.ForeColor = [System.Drawing.Color]::White
+        $label.Font = New-Object System.Drawing.Font('Segoe UI', 14)
+        $label.Dock = 'Top'
+        $label.Height = 40
+        $label.TextAlign = 'MiddleCenter'
+        $label.Text = 'Vorbereitung...'
+        $panel.Controls.Add($label)
+
+        $bar = New-Object System.Windows.Forms.ProgressBar
+        $bar.Style = 'Continuous'
+        $bar.Dock = 'Top'
+        $bar.Height = 28
+        $bar.Value = 0
+        $panel.Controls.Add($bar)
+
+        $timer = New-Object System.Windows.Forms.Timer
+        $timer.Interval = 200
+        $timer.Add_Tick({ [System.Windows.Forms.Application]::DoEvents() })
+        $timer.Start()
+
+        $form.Show()
+        $global:__OSD_Form  = $form
+        $global:__OSD_Label = $label
+        $global:__OSD_Bar   = $bar
+        $global:__OSD_Timer = $timer
+        $global:WinFormsOverlayStarted = $true
+        Write-Host -ForegroundColor Green "[+] WinForms Overlay gestartet."
+    } catch {
+        Write-Host -ForegroundColor Yellow "[!] WinForms Overlay konnte nicht gestartet werden: $($_.Exception.Message)"
+    }
+}
+
+function Update-OSDWinPEProgress {
+    param([int]$Percent = -1, [string]$Text = $null)
+    if (-not $global:__OSD_Form) { return }
+    try {
+        if ($PSBoundParameters.ContainsKey('Text') -and $global:__OSD_Label) {
+            $global:__OSD_Label.Text = $Text
+        }
+        if ($PSBoundParameters.ContainsKey('Percent') -and $global:__OSD_Bar) {
+            $p = [Math]::Max(0, [Math]::Min(100, $Percent))
+            $global:__OSD_Bar.Value = $p
+        }
+        [System.Windows.Forms.Application]::DoEvents()
+    } catch {}
+}
+
+function Stop-OSDWinPEProgress {
+    if (-not $global:__OSD_Form) { return }
+    try { $global:__OSD_Timer.Stop() } catch {}
+    try { $global:__OSD_Form.Close() } catch {}
+    try { $global:__OSD_Form.Dispose() } catch {}
+    $global:__OSD_Form  = $null
+    $global:__OSD_Label = $null
+    $global:__OSD_Bar   = $null
+    $global:__OSD_Timer = $null
+    $global:WinFormsOverlayStarted = $false
+    Write-Host -ForegroundColor DarkGray "[=] WinForms Overlay geschlossen."
+}
+# =====================================================================
 Write-Host -ForegroundColor Green "Transport Layer Security (TLS) 1.2"
 [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
 #[System.Net.WebRequest]::DefaultWebProxy.Credentials = [System.Net.CredentialCache]::DefaultCredentials
@@ -78,6 +190,52 @@ try {
     Import-Module OSD -Force -ErrorAction Stop
     $osdLoaded = $true
     Write-Host -ForegroundColor Green "[+] OSD $((Get-Module OSD).Version) loaded"
+
+
+# === OSDProgress optional & ohne Hänger ===
+$SupportsWPF = $true
+try { Add-Type -AssemblyName PresentationFramework -ErrorAction Stop } catch { $SupportsWPF = $false }
+
+$HaveOSDProgress = $false
+try { if (Get-Module -ListAvailable -Name OSDProgress) { $HaveOSDProgress = $true } } catch {}
+
+if (-not $SupportsWPF -or -not $HaveOSDProgress) {
+    if (-not $SupportsWPF)    { Write-Host -ForegroundColor Yellow "[!] WPF nicht verfügbar. Overlay wird übersprungen." }
+    if (-not $HaveOSDProgress){ Write-Host -ForegroundColor Yellow "[!] Modul 'OSDProgress' nicht vorhanden. Overlay wird übersprungen." }
+    $global:CaritasOSDProgressStarted = $false
+    Start-OSDWinPEProgress -ImagePath 'C:\Service\OSDCaritas\Config\splash.jpg'
+}
+else {
+    Write-Host -ForegroundColor DarkGray "$((Get-Date).ToString('yyyy-MM-dd-HHmmss'))  [PreOS] Starte OSDProgress..."
+    $Template = 'C:\Service\OSDCaritas\Config\Caritas.OSDProgress.psd1'
+
+    # Start in separatem Job, damit nie blockiert:
+    $job = Start-Job -ScriptBlock {
+        param($tpl)
+        Import-Module OSDProgress -Force
+        if (Test-Path $tpl) { Invoke-OSDProgress -Style Win10 -TemplateFile $tpl } else { Invoke-OSDProgress -Style Win10 }
+        '[OSDProgressStarted]'
+        Start-Sleep -Seconds 1
+    } -ArgumentList $Template
+
+    if (Wait-Job $job -Timeout 10) {
+        $out = Receive-Job $job -Keep
+        if ($out -match 'OSDProgressStarted') {
+            $global:CaritasOSDProgressStarted = $true
+            Write-Host -ForegroundColor Green "[+] OSDProgress gestartet."
+            try { Set-PhaseCompat -stepInt 1 -text 'Vorbereitung...' } catch {}
+        } else {
+            Write-Host -ForegroundColor Yellow "[!] OSDProgress-Job ohne Startsignal – fahre ohne Overlay fort."
+            $global:CaritasOSDProgressStarted = $false
+        }
+    } else {
+        Write-Host -ForegroundColor Yellow "[!] OSDProgress Start Timeout (10s) – fahre ohne Overlay fort."
+        $global:CaritasOSDProgressStarted = $false
+        Stop-Job $job -Force | Out-Null
+    }
+}
+# ==========================================
+
 } catch {
     Write-Host -ForegroundColor Yellow "OSD from PSGallery failed: $($_.Exception.Message)"
     # Fallback: bootstrap OSD via functions.osdcloud.com
@@ -153,20 +311,41 @@ if ($OSDProgLoaded) {
 
 # --- Phase compatibility wrapper (handles different OSDProgress versions) ---
 $__upd = Get-Command Update-OSDProgress -ErrorAction SilentlyContinue
+
+# --- Phase compatibility wrapper (handles different OSDProgress versions & WinForms fallback) ---
+$__upd = Get-Command Update-OSDProgress -ErrorAction SilentlyContinue
 function Set-PhaseCompat {
     param([string]$text, [int]$stepInt = 1)
-    if ($__upd -and $__upd.Parameters.ContainsKey('Phase')) {
-        $phaseName = "Phase$stepInt"
-        try { Update-OSDProgress -Phase $phaseName -DisplayBar -Text $text; return } catch {}
-        $map = @{ 1='PreOS'; 2='OS'; 3='PostOS' }
-        if ($map.ContainsKey($stepInt)) { try { Update-OSDProgress -Phase $map[$stepInt] -DisplayBar -Text $text; return } catch {} }
-        try { Update-OSDProgress -DisplayBar -Text $text; return } catch {}
-    } elseif ($__upd -and $__upd.Parameters.ContainsKey('Step')) {
-        try { Update-OSDProgress -Step $stepInt -DisplayBar -Text $text; return } catch {}
+
+    $handled = $false
+    if ($global:CaritasOSDProgressStarted -and $__upd) {
+        if ($__upd.Parameters.ContainsKey('Phase')) {
+            $phaseName = "Phase$stepInt"
+            try { Update-OSDProgress -Phase $phaseName -DisplayBar -Text $text; $handled = $true } catch {}
+            if (-not $handled) {
+                $map = @{ 1='PreOS'; 2='OS'; 3='PostOS' }
+                if ($map.ContainsKey($stepInt)) { try { Update-OSDProgress -Phase $map[$stepInt] -DisplayBar -Text $text; $handled = $true } catch {} }
+            }
+            if (-not $handled) { try { Update-OSDProgress -DisplayBar -Text $text; $handled = $true } catch {} }
+        } elseif ($__upd.Parameters.ContainsKey('Step')) {
+            try { Update-OSDProgress -Step $stepInt -DisplayBar -Text $text; $handled = $true } catch {}
+        }
+        if (-not $handled) { try { Update-OSDProgress -DisplayBar -Text $text; $handled = $true } catch {} }
     }
-    try { Update-OSDProgress -DisplayBar -Text $text } catch {}
+
+    if (-not $handled -and $global:WinFormsOverlayStarted) {
+        $pc = @{1=5; 2=50; 3=90}
+        $percent = ($pc.ContainsKey($stepInt)) ? $pc[$stepInt] : -1
+        Update-OSDWinPEProgress -Percent $percent -Text $text
+        $handled = $true
+    }
+
+    if (-not $handled) {
+        Write-Host -ForegroundColor DarkGray "[i] Phase: $stepInt :: $text"
+    }
 }
 # ---------------------------------------------------------------------------
+
     } else {
         Invoke-OSDProgress -Style Win10
     }
@@ -551,5 +730,6 @@ try {
     if ($global:CaritasOSDProgressStarted) { 
         Update-OSDProgress -Text 'Fertig. Neustart...'
         Stop-OSDProgress 
+if ($global:WinFormsOverlayStarted) { Stop-OSDWinPEProgress }
     }
 } catch {}
