@@ -57,9 +57,12 @@ Write-Host -ForegroundColor DarkGray "$((Get-Date).ToString('yyyy-MM-dd-HHmmss')
 Write-Host -ForegroundColor Green "Importing OSD PowerShell Module"
 Import-Module OSD -Force
 # ================= OSDProgress Start (Caritas) =================
+# Ordner sicher erstellen
 New-Item "C:\Service\OSDCaritas\Config" -ItemType Directory -Force | Out-Null
-Invoke-RestMethod https://github.com/oneictag/OSDPad/blob/main/Caritas_Schweiz_Logo_rot-weiss.png | Out-File -FilePath 'C:\Service\OSDCaritas\Config\Caritas_Schweiz_Logo_weiss.png' -Encoding ascii -Force
-Invoke-RestMethod https://github.com/oneictag/OSDPad/blob/main/Caritas.OSDProgress.psd1 | Out-File -FilePath 'C:\Service\OSDCaritas\Config\Caritas.OSDProgress.psd1' -Encoding ascii -Force
+$logoURL     = 'https://raw.githubusercontent.com/oneictag/OSDPad/main/Caritas_Schweiz_Logo_rot-weiss.png'
+$templateURL = 'https://raw.githubusercontent.com/oneictag/OSDPad/main/Caritas.OSDProgress.psd1'
+Invoke-WebRequest -Uri $logoURL -OutFile 'C:\Service\OSDCaritas\Config\Caritas_Schweiz_Logo_weiss.png' -UseBasicParsing -ErrorAction Stop
+Invoke-WebRequest -Uri $templateURL -OutFile 'C:\Service\OSDCaritas\Config\Caritas.OSDProgress.psd1' -UseBasicParsing -ErrorAction Stop
 
 try {
     $TemplatePath = 'C:\Service\OSDCaritas\Config\Caritas.OSDProgress.psd1'
