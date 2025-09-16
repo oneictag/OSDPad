@@ -146,8 +146,8 @@ Write-SectionHeader "[PreOS] Define OSDCloud Global And Customer Parameters"
 #=======================================================================
 $Global:WPNinjaCH   = $null
 $Global:WPNinjaCH   = [ordered]@{
-    Development     = [bool]$false
-    TestGroup       = [bool]$false
+    Development     = [bool]$true
+    TestGroup       = [bool]$true
 }
 Write-SectionHeader "WPNinjaCH variables"
 Write-Host ($Global:WPNinjaCH | Out-String)
