@@ -179,8 +179,8 @@ $AssignedComputerName = "CACH-2$lastFourChars"
 if ($Global:WPNinjaCH.TestGroup -eq $true){
     Write-DarkGrayHost "Adding device to Intune_DE_Device
  Group"
-    $AddToGroup = "Intune_DE_Device
-"
+    $AddToGroup = "Intune_DE_Device"
+
 }
 else {
     Write-DarkGrayHost "Adding device to Intune_DE_Device Group"
