@@ -172,45 +172,8 @@ Write-SectionHeader "[PostOS] Define Autopilot Attributes"
 Write-DarkGrayHost "Define Computername"
 $Serial = Get-WmiObject Win32_bios | Select-Object -ExpandProperty SerialNumber
 $lastFourChars = $serial.Substring($serial.Length - 4)
-#$AssignedComputerName = "NB-2$lastFourChars"
+$AssignedComputerName = "CACH-2$lastFourChars"
 
-$ChassisType = (Get-WmiObject -Query "SELECT * FROM Win32_SystemEnclosure").ChassisTypes
-$HyperV = Get-WmiObject -Query "SELECT * FROM Win32_ComputerSystem WHERE Manufacturer LIKE '%Microsoft Corporation%' AND Model LIKE '%Virtual Machine%'"
-$VMware = Get-WmiObject -Query "SELECT * FROM Win32_ComputerSystem WHERE Manufacturer LIKE '%VMware%' AND Model LIKE '%VMware%'"
-
-If ($HyperV -or $VMware) {
-    $HW         = "VM"
-}
-
-If ($ChassisType -eq "8" -or`
-    $ChassisType -eq "9" -or`
-    $ChassisType -eq "10" -or`
-    $ChassisType -eq "11" -or`
-    $ChassisType -eq "12" -or`
-    $ChassisType -eq "14" -or`
-    $ChassisType -eq "18" -or`
-    $ChassisType -eq "21" -or`
-    $ChassisType -eq "31") {
-    $HW = "NB"
-}
-
-elseif ($ChassisType -eq "3" -or`
-    $ChassisType -eq "4" -or`
-    $ChassisType -eq "5" -or`
-    $ChassisType -eq "6" -or`
-    $ChassisType -eq "7" -or`
-    $ChassisType -eq "15" -or`
-    $ChassisType -eq "16" -or`
-    $ChassisType -eq "35") {
-    $HW = "PC"
-}
-
-If (!($HW)) {
-    $AssignedComputerName = "RENAME_ME$Serial"
-}
-else {
-    $AssignedComputerName = "$HW-2$lastFourChars"        
-}
 
 # Device assignment
 if ($Global:WPNinjaCH.TestGroup -eq $true){
@@ -314,7 +277,7 @@ Write-SectionHeader "[PostOS] OOBE CMD Command Line"
 #================================================
 Write-DarkGrayHost "Downloading Scripts for OOBE and specialize phase"
 
-# Invoke-RestMethod https://raw.githubusercontent.com/oneictag/OSDPad/refs/heads/main/Autopilot.ps1 | Out-File -FilePath 'C:\Windows\Setup\scripts\autopilot.ps1' -Encoding ascii -Force
+Invoke-RestMethod https://raw.githubusercontent.com/oneictag/OSDPad/refs/heads/main/Autopilot.ps1 | Out-File -FilePath 'C:\Windows\Setup\scripts\autopilot.ps1' -Encoding ascii -Force
 Invoke-RestMethod https://raw.githubusercontent.com/oneictag/OSDPad/refs/heads/main/OOBE.ps1 | Out-File -FilePath 'C:\Windows\Setup\scripts\oobe.ps1' -Encoding ascii -Force
 Invoke-RestMethod https://raw.githubusercontent.com/oneictag/OSDPad/refs/heads/main/CleanUp.ps1 | Out-File -FilePath 'C:\Windows\Setup\scripts\cleanup.ps1' -Encoding ascii -Force
 #Invoke-RestMethod http://osdgather.osdcloud.ch | Out-File -FilePath 'C:\Windows\Setup\scripts\osdgather.ps1' -Encoding ascii -Force
@@ -387,5 +350,7 @@ if ($Global:WPNinjaCH.Development -eq $false){
 }
 else {
     Write-DarkGrayHost "Development Mode - No reboot!"
+	Start-Sleep -Seconds 20
+	wpeutil reboot
     Stop-Transcript | Out-Null
 }

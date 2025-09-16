@@ -473,7 +473,7 @@ $subjectName = "OSDCloudRegistration"
 $cert = Get-ChildItem -Path "Cert:\LocalMachine\My" | Where-Object { $_.Subject -Match "$subjectName" }
 
 # Comment out after testing
-# $cert
+$cert
 
 Write-SectionHeader "Grabbing Autopilot parameters"
 $ProgramDataOSDeploy = "$env:ProgramData\OSDeploy"
@@ -488,8 +488,8 @@ $Params = @{
 	Online               = $true
 	AddToGroup           = $ImportAutopilotOOBE.AddToGroup
 	AssignedComputerName = $ImportAutopilotOOBE.AssignedComputerName
-	TenantID             = "XXXXXXXX"
-	AppID                = "YYYYYYYY"
+	TenantID             = "ac18be77-b02e-43af-a43c-f4c864849161"
+	AppID                = "9d9a8bd8-1f84-4651-9363-739f04a1ab8d"
 }
 
 # Comment out after testing
