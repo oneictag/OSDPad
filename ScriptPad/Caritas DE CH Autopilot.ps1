@@ -177,14 +177,13 @@ $AssignedComputerName = "CACH-2$lastFourChars"
 
 # Device assignment
 if ($Global:WPNinjaCH.TestGroup -eq $true){
-    Write-DarkGrayHost "Adding device to Intune_DE_Device
- Group"
+    Write-DarkGrayHost "Adding device to Intune_DE_Device Group"
     $AddToGroup = "Intune_DE_Device"
 
 }
 else {
     Write-DarkGrayHost "Adding device to Intune_DE_Device Group"
-    $AddToGroup = "Intune_DE_Device"
+    $AddToGroup = ""
 }
 
 Write-Host -ForegroundColor Yellow "Computername: $AssignedComputerName"
@@ -201,8 +200,11 @@ $AutopilotOOBEJson = @"
         "Assign":  {
                     "IsPresent":  true
                 },
-        "GroupTag":  "",
+        "GroupTag":  "$GroupTag",
         "Hidden":  [
+                    "AddToGroup",
+                    "AssignedUser",
+                    "PostAction",
                     "GroupTag",
                     "Assign"
                 ],
