@@ -42,6 +42,62 @@ Write-Host -ForegroundColor Green "Transport Layer Security (TLS) 1.2"
 [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
 #[System.Net.WebRequest]::DefaultWebProxy.Credentials = [System.Net.CredentialCache]::DefaultCredentials
 
+
+# ================== Config / Pfade ==================
+$CaritasDir = Join-Path $env:ProgramData 'Microsoft\IntuneManagementExtension\Logs\OSD'
+New-Item -Path $CaritasDir -ItemType Directory -Force | Out-Null
+
+# RAW-Quellen (wichtig! kein /blob/)
+$SplashHelperUrl = 'https://raw.githubusercontent.com/oneictag/OSDPad/refs/heads/main/Caritas_Splash_After_OSDPad.ps1'
+$LogoUrl         = 'https://raw.githubusercontent.com/oneictag/OSDPad/main/Caritas_Schweiz_Logo_rot-weiss.png'
+
+# Zielpfade unter ProgramData
+$global:CaritasSplashScript = Join-Path $CaritasDir 'Caritas_Splash_After_OSDPad.ps1'
+$global:CaritasSplashImage  = Join-Path $CaritasDir 'Caritas_Schweiz_Logo_rot-weiss.png'
+
+# Das eigentliche Deployment-Script (RAW!)
+$DeploymentRawUrl = 'https://raw.githubusercontent.com/oneictag/OSDPad/refs/heads/main/Caritas%20DE%20CH%20Autopilot.ps1'
+
+# Netzwerk/Download-Settings
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+$ProgressPreference = 'SilentlyContinue'
+
+function Get-CaritasAsset {
+    param([Parameter(Mandatory)][string]$Url,
+          [Parameter(Mandatory)][string]$Dest,
+          [switch]$Binary)
+    if (Test-Path $Dest) { return }
+    try {
+        if ($Binary) {
+            Invoke-WebRequest -Uri $Url -OutFile $Dest -UseBasicParsing -TimeoutSec 30 -ErrorAction Stop
+        } else {
+            Invoke-WebRequest -Uri $Url -OutFile $Dest -UseBasicParsing -TimeoutSec 30 -Headers @{ 'User-Agent'='OSDCaritas' } -ErrorAction Stop
+        }
+        Write-Host -ForegroundColor DarkGray "[=] Download: $Url -> $Dest"
+    } catch {
+        Write-Host -ForegroundColor Yellow "[!] Download fehlgeschlagen: $Url -> $Dest : $($_.Exception.Message)"
+    }
+}
+
+# Helper & Logo lokal bereitstellen
+Get-CaritasAsset -Url $SplashHelperUrl -Dest $global:CaritasSplashScript
+Get-CaritasAsset -Url $LogoUrl         -Dest $global:CaritasSplashImage -Binary
+
+# Helper in die Session laden (liefert Start-CaritasSplash/Stop-CaritasSplash)
+if (Test-Path $global:CaritasSplashScript) {
+    . $global:CaritasSplashScript
+} else {
+    Write-Host -ForegroundColor Yellow "[!] Splash-Helper fehlt: $global:CaritasSplashScript – fahre ohne Splash fort."
+}
+
+# ================== Splash + Deployment ==================
+if (Get-Command Start-CaritasSplash -ErrorAction SilentlyContinue) {
+    Write-Host -ForegroundColor Cyan "[i] Starte Caritas Splash..."
+    $global:CaritasSplashProc = Start-CaritasSplash -ImagePath $global:CaritasSplashImage -Opacity 100
+} else {
+    Write-Host -ForegroundColor Yellow "[!] Start-CaritasSplash nicht verfügbar – Splash wird übersprungen."
+}
+
 $Transcript = "$((Get-Date).ToString('yyyy-MM-dd-HHmmss'))-Start-OSDCloudLogic.log"
 Start-Transcript -Path (Join-Path "X:\OSDCloud\Logs" $Transcript) -ErrorAction Ignore | Out-Null
 
@@ -351,6 +407,14 @@ if (-NOT (Test-Path 'C:\ProgramData\Microsoft\IntuneManagementExtension\Logs\OSD
     New-Item -Path 'C:\ProgramData\Microsoft\IntuneManagementExtension\Logs\OSD' -ItemType Directory -Force -ErrorAction Stop | Out-Null	
 }	
 Get-ChildItem -Path X:\OSDCloud\Logs\ | Copy-Item -Destination 'C:\ProgramData\Microsoft\IntuneManagementExtension\Logs\OSD' -Force
+
+
+
+if (Get-Command Stop-CaritasSplash -ErrorAction SilentlyContinue) {
+	Stop-CaritasSplash -Process $global:CaritasSplashProc
+}
+
+
 
 if ($Global:WPNinjaCH.Development -eq $false){
     Write-DarkGrayHost "Restarting in 20 seconds!"
