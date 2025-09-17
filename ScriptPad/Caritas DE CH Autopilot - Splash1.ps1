@@ -42,21 +42,43 @@ Write-Host -ForegroundColor Green "Transport Layer Security (TLS) 1.2"
 [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
 #[System.Net.WebRequest]::DefaultWebProxy.Credentials = [System.Net.CredentialCache]::DefaultCredentials
 
-# Splash
+
+# Splash 
 Import-Module OSD -Force
-# Primären Monitor nehmen (liefert z.B. \\.\DISPLAY1)
+
+# Primären Monitor (z. B. \\.\DISPLAY1)
 $Dev = ([System.Windows.Forms.Screen]::PrimaryScreen).DeviceName
-$SplashPs1 = "X:\Program Files\WindowsPowerShell\Modules\OSD\25.9.16.4\Resources\SplashScreen\Create-FullScreenBackground.ps1"
-# Zum Testen OHNE Hidden, damit du Fehler siehst
-Start-Process powershell.exe -ArgumentList `
+
+# Modulbasis dynamisch ermitteln (OSD liefert Get-OSDModulePath; Fallback auf (Get-Module OSD).ModuleBase)
+$ModuleBase = $null
+if (Get-Command -Name Get-OSDModulePath -ErrorAction SilentlyContinue) {
+    $ModuleBase = Get-OSDModulePath
+} else {
+    $ModuleBase = (Get-Module -Name OSD -ListAvailable | Sort-Object Version -Descending | Select-Object -First 1).ModuleBase
+}
+
+# Pfad zum Splash-Script (ohne Versionsnummer)
+$SplashPs1 = Join-Path $ModuleBase 'Resources\SplashScreen\Create-FullScreenBackground.ps1'
+
+# Splash in eigenem STA-Prozess starten und Handle merken
+$child = Start-Process powershell.exe -PassThru -ArgumentList `
   "-NoProfile -ExecutionPolicy Bypass -STA -File `"$SplashPs1`" -DeviceName `"$Dev`""
-  
-$Window.Add_KeyDown({
-    param($s, $e)
-    if ($e.Key -eq 'Escape') {
-        $s.Close()
+
+# === ESC-Hotkey-Watcher (beendet nur den Splash-Prozess; kein Modulpatch nötig) ===
+Add-Type -Namespace Win32 -Name User32 -MemberDefinition @"
+[System.Runtime.InteropServices.DllImport("user32.dll")]
+public static extern short GetAsyncKeyState(int vKey);
+"@
+
+# VK_ESCAPE = 0x1B
+while (-not $child.HasExited) {
+    Start-Sleep -Milliseconds 100
+    if ( [Win32.User32]::GetAsyncKeyState(0x1B) -band 0x8000 ) {
+        try { Stop-Process -Id $child.Id -Force } catch {}
+        break
     }
-})
+}
+
 
 $Transcript = "$((Get-Date).ToString('yyyy-MM-dd-HHmmss'))-Start-OSDCloudLogic.log"
 Start-Transcript -Path (Join-Path "X:\OSDCloud\Logs" $Transcript) -ErrorAction Ignore | Out-Null
