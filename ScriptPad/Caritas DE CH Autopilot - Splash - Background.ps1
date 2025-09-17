@@ -44,49 +44,22 @@ Write-Host -ForegroundColor Green "Transport Layer Security (TLS) 1.2"
 
 
 # Splash 
-# 1) Modul & Pfade
+# Modulpfad ermitteln (versionsfrei)
 Import-Module OSD -Force
+$ModuleBase = if (Get-Command Get-OSDModulePath -EA SilentlyContinue) { Get-OSDModulePath } else { (Get-Module OSD -ListAvailable | Sort-Object Version -desc | Select-Object -First 1).ModuleBase }
+$Src = Join-Path $ModuleBase 'Resources\SplashScreen\Create-FullScreenBackground.ps1'
+$Dst = 'X:\OSDCloud\Custom\Create-FullScreenBackground.Custom.ps1'
+New-Item -ItemType Directory (Split-Path $Dst) -Force | Out-Null
 
-# Modulpfad dynamisch (kein Hardcode der Versionsnummer)
-$ModuleBase = if (Get-Command Get-OSDModulePath -EA SilentlyContinue) {
-    Get-OSDModulePath
-} else {
-    (Get-Module OSD -ListAvailable | Sort-Object Version -Descending | Select-Object -First 1).ModuleBase
-}
-$SplashPs1 = Join-Path $ModuleBase 'Resources\SplashScreen\Create-FullScreenBackground.ps1'
+# nur den Rechtsklick-Block einkommentieren
+(Get-Content $Src) `
+  -replace '<#\s*\$Window\.Add_MouseRightButtonDown','$Window.Add_MouseRightButtonDown' `
+  -replace '\}\s*#>','}' |
+  Set-Content -Path $Dst -Encoding UTF8
 
-# Primären Monitor fuer das WPF-Fenster
+# starten (wie gehabt)
 $Dev = ([System.Windows.Forms.Screen]::PrimaryScreen).DeviceName
-
-# 2) Quelle finden (dein ISO/USB-Laufwerk, NICHT C: und nicht X:)
-$osdRoot = Get-PSDrive -PSProvider FileSystem |
-  Where-Object { $_.Name -notin 'C','X' } |
-  ForEach-Object {
-    if (Test-Path "$($_.Root)OSDCloud\Resources\Images\SPLASH.JSON") { $_.Root }
-  } | Select-Object -Last 1
-
-# 3) JSON erst jetzt „scharf“ schalten
-if ($osdRoot) {
-    New-Item -ItemType Directory -Path 'X:\OSDCloud\Config' -Force | Out-Null
-    Copy-Item "$osdRoot\OSDCloud\Resources\Images\SPLASH.JSON" 'X:\OSDCloud\Config\SPLASH.JSON' -Force
-    # optional Bild mit in Config legen, falls du es spaeter brauchst
-    if (Test-Path "$osdRoot\OSDCloud\Resources\Images\Background.jpg") {
-        Copy-Item "$osdRoot\OSDCloud\Resources\Images\Background.jpg" 'X:\OSDCloud\Config\Background.jpg' -Force
-    }
-}
-
-# 4) Splash starten (das Script sucht die SPLASH.JSON selbst unter *:\OSDCloud\Config)
-Start-Process powershell.exe -ArgumentList `
-  "-NoProfile -ExecutionPolicy Bypass -STA -File `"$SplashPs1`" -DeviceName `"$Dev`""
-
-
-# Optional: ESC beendet den Splash-Prozess (Hotkey-Watcher)
-Add-Type -Namespace Win32 -Name User32 -MemberDefinition '[DllImport("user32.dll")]public static extern short GetAsyncKeyState(int vKey);'
-while (-not $child.HasExited) {
-  Start-Sleep -Milliseconds 100
-  if ([Win32.User32]::GetAsyncKeyState(0x1B) -band 0x8000) { Stop-Process -Id $child.Id -Force; break }
-}
-
+Start-Process powershell.exe -ArgumentList "-NoProfile -ExecutionPolicy Bypass -STA -File `"$Dst`" -DeviceName `"$Dev`""
 
 
 
