@@ -44,45 +44,41 @@ Write-Host -ForegroundColor Green "Transport Layer Security (TLS) 1.2"
 
 
 # Splash 
-# Modul & Pfade
+# 1) Modul & Pfade
 Import-Module OSD -Force
+
+# Modulpfad dynamisch (kein Hardcode der Versionsnummer)
+$ModuleBase = if (Get-Command Get-OSDModulePath -EA SilentlyContinue) {
+    Get-OSDModulePath
+} else {
+    (Get-Module OSD -ListAvailable | Sort-Object Version -Descending | Select-Object -First 1).ModuleBase
+}
+$SplashPs1 = Join-Path $ModuleBase 'Resources\SplashScreen\Create-FullScreenBackground.ps1'
+
+# Primären Monitor fuer das WPF-Fenster
 $Dev = ([System.Windows.Forms.Screen]::PrimaryScreen).DeviceName
-$ModuleBase  = (Get-Command Get-OSDModulePath -ErrorAction SilentlyContinue) ? (Get-OSDModulePath) : ((Get-Module OSD -ListAvailable | Sort-Object Version -desc | Select-Object -First 1).ModuleBase)
-$Src = Join-Path $ModuleBase 'Resources\SplashScreen\Create-FullScreenBackground.ps1'
-$Tmp = 'X:\OSDCloud\Custom\Create-FullScreenBackground.Caritas.ps1'
-New-Item -ItemType Directory (Split-Path $Tmp) -Force | Out-Null
 
-# Inhalt laden und Background-Zeile ersetzen/erweitern
-$code = Get-Content $Src -Raw
+# 2) Quelle finden (dein ISO/USB-Laufwerk, NICHT C: und nicht X:)
+$osdRoot = Get-PSDrive -PSProvider FileSystem |
+  Where-Object { $_.Name -notin 'C','X' } |
+  ForEach-Object {
+    if (Test-Path "$($_.Root)OSDCloud\Resources\Images\SPLASH.JSON") { $_.Root }
+  } | Select-Object -Last 1
 
-$inject = @"
-# --- Caritas Background Image (falls vorhanden) ---
-try {
-    [void][System.Reflection.Assembly]::LoadWithPartialName('PresentationCore')
-    [void][System.Reflection.Assembly]::LoadWithPartialName('PresentationFramework')
-    \$imgCandidates = @('X:\OSDCloud\Resources\Images\Background.jpg','D:\OSDCloud\Resources\Images\Background.jpg')
-    \$img = \$imgCandidates | Where-Object { Test-Path \$_.Trim() } | Select-Object -First 1
-    if (\$img) {
-        \$bi = New-Object System.Windows.Media.Imaging.BitmapImage
-        \$bi.BeginInit(); \$bi.UriSource = [Uri]\$img; \$bi.CacheOption = 'OnLoad'; \$bi.EndInit()
-        \$brush = New-Object System.Windows.Media.ImageBrush(\$bi)
-        \$brush.Stretch = 'UniformToFill'
-        \$window.Background = \$brush
-    } else {
-        \$window.Background = '#012a47'
+# 3) JSON erst jetzt „scharf“ schalten
+if ($osdRoot) {
+    New-Item -ItemType Directory -Path 'X:\OSDCloud\Config' -Force | Out-Null
+    Copy-Item "$osdRoot\OSDCloud\Resources\Images\SPLASH.JSON" 'X:\OSDCloud\Config\SPLASH.JSON' -Force
+    # optional Bild mit in Config legen, falls du es spaeter brauchst
+    if (Test-Path "$osdRoot\OSDCloud\Resources\Images\Background.jpg") {
+        Copy-Item "$osdRoot\OSDCloud\Resources\Images\Background.jpg" 'X:\OSDCloud\Config\Background.jpg' -Force
     }
-} catch { \$window.Background = '#012a47' }
-# --- /Caritas ---
-"@
+}
 
-# nach der ersten Zuweisung von $window.Background einschieben
-$code = $code -replace '(\$window\.Background\s*=\s*".*?")', "`$1`r`n$inject"
+# 4) Splash starten (das Script sucht die SPLASH.JSON selbst unter *:\OSDCloud\Config)
+Start-Process powershell.exe -ArgumentList `
+  "-NoProfile -ExecutionPolicy Bypass -STA -File `"$SplashPs1`" -DeviceName `"$Dev`""
 
-Set-Content -Path $Tmp -Value $code -Encoding UTF8
-
-# Splash aus der Kopie starten (STA & DeviceName)
-$child = Start-Process powershell.exe -PassThru -ArgumentList `
-  "-NoProfile -ExecutionPolicy Bypass -STA -File `"$Tmp`" -DeviceName `"$Dev`""
 
 # Optional: ESC beendet den Splash-Prozess (Hotkey-Watcher)
 Add-Type -Namespace Win32 -Name User32 -MemberDefinition '[DllImport("user32.dll")]public static extern short GetAsyncKeyState(int vKey);'
