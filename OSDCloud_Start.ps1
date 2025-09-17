@@ -47,39 +47,6 @@ if (Test-Path $global:CaritasSplashScript) {
     Write-Host -ForegroundColor Yellow "[!] Splash-Skript nicht vorhanden: $global:CaritasSplashScript (fahre ohne Splash fort)"
 }
 
-# ====================================================================
-# >>>> AB HIER: dein bisheriger Ablauf <<<<
-# ====================================================================
-
-# 1) ZUERST OSDPad anzeigen
-Start-OSDPad -RepoOwner oneictag -RepoName OSDPad -RepoFolder ScriptPad -BrandingTitle 'Caritas Deployment'
-
-# 2) Danach Splash starten (nur wenn Funktionsdefinition verfuegbar)
-if (Get-Command Start-CaritasSplash -ErrorAction SilentlyContinue) {
-    $global:CaritasSplashProc = Start-CaritasSplash -ImagePath $global:CaritasSplashImage -Opacity 100
-} else {
-    Write-Host -ForegroundColor Yellow "[!] Start-CaritasSplash nicht verfuegbar – Splash wird uebersprungen."
-}
-
-try {
-    # 3) >>> Hier deine eigentliche Logik (nichts geaendert) <<<
-    # Beispiel:
-    # Update: Vorbereitungsphase etc. (nur Logging, optional)
-    # Write-Host "[i] Vorbereitung..."
-    
-    # Windows Deployment
-    Invoke-OSDCloud
-
-    # Nachbereitung (Autopilot, Treiber, Apps, etc.)
-    # ... dein bestehender Code ...
-}
-finally {
-    # 4) Splash immer sauber schliessen
-    if (Get-Command Stop-CaritasSplash -ErrorAction SilentlyContinue) {
-        Stop-CaritasSplash -Process $global:CaritasSplashProc
-    }
-}
-
 
 #Start OSDCloudScriptPad
 Write-Host -ForegroundColor Green "Start OSDPad"

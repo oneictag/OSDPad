@@ -41,7 +41,7 @@ if (-NOT (Test-Path 'X:\OSDCloud\Logs')) {
 if (Get-Command Start-CaritasSplash -ErrorAction SilentlyContinue) {
     $global:CaritasSplashProc = Start-CaritasSplash -ImagePath $global:CaritasSplashImage -Opacity 100
 } else {
-    Write-Host -ForegroundColor Yellow "[!] Start-CaritasSplash nicht verfügbar – Splash wird übersprungen."
+    Write-Host -ForegroundColor Yellow "[!] Start-CaritasSplash nicht verfgbar – Splash wird übersprungen."
 }
 
 
@@ -185,14 +185,13 @@ $AssignedComputerName = "CACH-2$lastFourChars"
 
 # Device assignment
 if ($Global:WPNinjaCH.TestGroup -eq $true){
-    Write-DarkGrayHost "Adding device to Intune_DE_Device
- Group"
+    Write-DarkGrayHost "Adding device to Intune_DE_Device"
     $AddToGroup = "Intune_DE_Device"
 
 }
 else {
     Write-DarkGrayHost "Adding device to Intune_DE_Device Group"
-    $AddToGroup = "Intune_DE_Device"
+    $AddToGroup = ""
 }
 
 Write-Host -ForegroundColor Yellow "Computername: $AssignedComputerName"
@@ -209,8 +208,11 @@ $AutopilotOOBEJson = @"
         "Assign":  {
                     "IsPresent":  true
                 },
-        "GroupTag":  "",
+        "GroupTag":  "$GroupTag",
         "Hidden":  [
+                    "AddToGroup",
+                    "AssignedUser",
+                    "PostAction",
                     "GroupTag",
                     "Assign"
                 ],
