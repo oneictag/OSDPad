@@ -37,6 +37,23 @@ if (-NOT (Test-Path 'X:\OSDCloud\Logs')) {
     New-Item -Path 'X:\OSDCloud\Logs' -ItemType Directory -Force -ErrorAction Stop | Out-Null
 }
 
+# --- Caritas Splash vorbereiten ---
+$CaritasDir = "$env:ProgramData\Microsoft\IntuneManagementExtension\Logs\OSD"
+New-Item $CaritasDir -ItemType Directory -Force | Out-Null
+
+# Splash-Skript & Logo aus GitHub holen
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/oneictag/OSDPad/refs/heads/main/Caritas_Splash_After_OSDPad.ps1" -OutFile (Join-Path $CaritasDir 'Caritas_Splash_After_OSDPad.ps1') -UseBasicParsing -ErrorAction Stop
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/oneictag/OSDPad/main/Caritas_Schweiz_Logo_rot-weiss.png" -OutFile (Join-Path $CaritasDir 'Caritas_Schweiz_Logo_rot-weiss.png') -UseBasicParsing -ErrorAction Stop
+
+# Standard-Splash-Pfad setzen
+$global:CaritasSplashImage = Join-Path $CaritasDir 'Caritas_Schweiz_Logo_rot-weiss.png'
+$global:CaritasSplashScript = Join-Path $CaritasDir 'Caritas_Splash_After_OSDPad.ps1'
+. $global:CaritasSplashScript
+# ---------------------------------
+
+$global:CaritasSplashProc = Start-CaritasSplash -ImagePath $global:CaritasSplashImage -Opacity 100
+
+
 #Transport Layer Security (TLS) 1.2
 Write-Host -ForegroundColor Green "Transport Layer Security (TLS) 1.2"
 [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
@@ -291,10 +308,10 @@ REM Execute OOBE Tasks
 start /wait powershell.exe -NoL -ExecutionPolicy Bypass -F C:\Windows\Setup\Scripts\oobe.ps1
 
 REM Execute OOBE Tasks
-start /wait powershell.exe -NoL -ExecutionPolicy Bypass -F C:\Windows\Setup\Scripts\AP-Prereq.ps1
+REM start /wait powershell.exe -NoL -ExecutionPolicy Bypass -F C:\Windows\Setup\Scripts\AP-Prereq.ps1
 
 REM Execute OOBE Tasks
-start /wait powershell.exe -NoL -ExecutionPolicy Bypass -F C:\Windows\Setup\Scripts\start-autopilotoobe.ps1
+REM start /wait powershell.exe -NoL -ExecutionPolicy Bypass -F C:\Windows\Setup\Scripts\start-autopilotoobe.ps1
 
 REM Execute OSD Gather Script
 REM start /wait powershell.exe -NoL -ExecutionPolicy Bypass -F C:\Windows\Setup\Scripts\osdgather.ps1
