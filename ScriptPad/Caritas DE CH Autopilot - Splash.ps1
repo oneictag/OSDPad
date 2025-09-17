@@ -37,14 +37,6 @@ if (-NOT (Test-Path 'X:\OSDCloud\Logs')) {
     New-Item -Path 'X:\OSDCloud\Logs' -ItemType Directory -Force -ErrorAction Stop | Out-Null
 }
 
-# Splash starten
-if (Get-Command Start-CaritasSplash -ErrorAction SilentlyContinue) {
-    $global:CaritasSplashProc = Start-CaritasSplash -ImagePath $global:CaritasSplashImage -Opacity 100
-} else {
-    Write-Host -ForegroundColor Yellow "[!] Start-CaritasSplash nicht verfgbar – Splash wird übersprungen."
-}
-
-
 #Transport Layer Security (TLS) 1.2
 Write-Host -ForegroundColor Green "Transport Layer Security (TLS) 1.2"
 [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
@@ -185,7 +177,7 @@ $AssignedComputerName = "CACH-2$lastFourChars"
 
 # Device assignment
 if ($Global:WPNinjaCH.TestGroup -eq $true){
-    Write-DarkGrayHost "Adding device to Intune_DE_Device"
+    Write-DarkGrayHost "Adding device to Intune_DE_Device Group"
     $AddToGroup = "Intune_DE_Device"
 
 }
@@ -245,8 +237,13 @@ $UnattendXml = @'
     <settings pass="specialize">
         <component name="Microsoft-Windows-Deployment" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
             <RunSynchronous>
-                <RunSynchronousCommand wcm:action="add">
+				<RunSynchronousCommand wcm:action="add">
                     <Order>1</Order>
+                    <Description>AP-Prereq</Description>
+                    <Path>PowerShell -ExecutionPolicy Bypass C:\Windows\Setup\Scripts\AP-Prereq.ps1</Path>
+                </RunSynchronousCommand>
+                <RunSynchronousCommand wcm:action="add">
+                    <Order>2</Order>
                     <Description>Start Autopilot Import & Assignment Process</Description>
                     <Path>PowerShell -ExecutionPolicy Bypass C:\Windows\Setup\scripts\autopilot.ps1</Path>
                 </RunSynchronousCommand>
@@ -304,7 +301,7 @@ REM Execute OOBE Tasks
 REM start /wait powershell.exe -NoL -ExecutionPolicy Bypass -F C:\Windows\Setup\Scripts\AP-Prereq.ps1
 
 REM Execute OOBE Tasks
-REM start /wait powershell.exe -NoL -ExecutionPolicy Bypass -F C:\Windows\Setup\Scripts\start-autopilotoobe.ps1
+start /wait powershell.exe -NoL -ExecutionPolicy Bypass -F C:\Windows\Setup\Scripts\start-autopilotoobe.ps1
 
 REM Execute OSD Gather Script
 REM start /wait powershell.exe -NoL -ExecutionPolicy Bypass -F C:\Windows\Setup\Scripts\osdgather.ps1

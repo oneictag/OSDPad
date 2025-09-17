@@ -239,7 +239,7 @@ $UnattendXml = @'
             <RunSynchronous>
 				<RunSynchronousCommand wcm:action="add">
                     <Order>1</Order>
-                    <Description>AP-Prereq.ps1</Description>
+                    <Description>AP-Prereq</Description>
                     <Path>PowerShell -ExecutionPolicy Bypass C:\Windows\Setup\Scripts\AP-Prereq.ps1</Path>
                 </RunSynchronousCommand>
                 <RunSynchronousCommand wcm:action="add">
@@ -301,7 +301,7 @@ REM Execute OOBE Tasks
 REM start /wait powershell.exe -NoL -ExecutionPolicy Bypass -F C:\Windows\Setup\Scripts\AP-Prereq.ps1
 
 REM Execute OOBE Tasks
-REM start /wait powershell.exe -NoL -ExecutionPolicy Bypass -F C:\Windows\Setup\Scripts\start-autopilotoobe.ps1
+start /wait powershell.exe -NoL -ExecutionPolicy Bypass -F C:\Windows\Setup\Scripts\start-autopilotoobe.ps1
 
 REM Execute OSD Gather Script
 REM start /wait powershell.exe -NoL -ExecutionPolicy Bypass -F C:\Windows\Setup\Scripts\osdgather.ps1
