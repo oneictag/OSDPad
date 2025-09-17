@@ -44,12 +44,13 @@ Write-Host -ForegroundColor Green "Transport Layer Security (TLS) 1.2"
 
 
 # Splash 
+# Modul laden
 Import-Module OSD -Force
 
-# Primären Monitor (z. B. \\.\DISPLAY1)
+# Primären Monitor nehmen
 $Dev = ([System.Windows.Forms.Screen]::PrimaryScreen).DeviceName
 
-# Modulbasis dynamisch ermitteln (OSD liefert Get-OSDModulePath; Fallback auf (Get-Module OSD).ModuleBase)
+# Modul Basis dynamisch
 $ModuleBase = $null
 if (Get-Command -Name Get-OSDModulePath -ErrorAction SilentlyContinue) {
     $ModuleBase = Get-OSDModulePath
@@ -57,27 +58,46 @@ if (Get-Command -Name Get-OSDModulePath -ErrorAction SilentlyContinue) {
     $ModuleBase = (Get-Module -Name OSD -ListAvailable | Sort-Object Version -Descending | Select-Object -First 1).ModuleBase
 }
 
-# Pfad zum Splash-Script (ohne Versionsnummer)
+# Splash-Script Pfad (versionsunabhängig)
 $SplashPs1 = Join-Path $ModuleBase 'Resources\SplashScreen\Create-FullScreenBackground.ps1'
 
-# Splash in eigenem STA-Prozess starten und Handle merken
-$child = Start-Process powershell.exe -PassThru -ArgumentList `
-  "-NoProfile -ExecutionPolicy Bypass -STA -File `"$SplashPs1`" -DeviceName `"$Dev`""
+# Pfad zum Hintergrundbild prüfen – Fallback
+# Vorzugsweise in 'X:\OSDCloud\Resources\Images\Background.jpg'
+$ImagePathX = "X:\OSDCloud\Resources\Images\Background.jpg"
+$ImagePathD = "D:\OSDCloud\Resources\Images\Background.jpg"
 
-# === ESC-Hotkey-Watcher (beendet nur den Splash-Prozess; kein Modulpatch nötig) ===
+if (Test-Path $ImagePathX) {
+    $Background = $ImagePathX
+} elseif (Test-Path $ImagePathD) {
+    $Background = $ImagePathD
+} else {
+    $Background = $null
+}
+
+# Argumentlist mit Background (falls vorhanden)
+$argList = "-NoProfile -ExecutionPolicy Bypass -STA -File `"$SplashPs1`" -DeviceName `"$Dev`""
+if ($Background) {
+    $argList += " -BackgroundImage `"$Background`""
+}
+
+# Splash-Prozess starten
+$child = Start-Process powershell.exe -PassThru -ArgumentList $argList
+
+# ESC-Hotkey zum Beenden
 Add-Type -Namespace Win32 -Name User32 -MemberDefinition @"
 [System.Runtime.InteropServices.DllImport("user32.dll")]
 public static extern short GetAsyncKeyState(int vKey);
 "@
 
-# VK_ESCAPE = 0x1B
 while (-not $child.HasExited) {
     Start-Sleep -Milliseconds 100
-    if ( [Win32.User32]::GetAsyncKeyState(0x1B) -band 0x8000 ) {
+    # VK_ESCAPE = 0x1B
+    if ([Win32.User32]::GetAsyncKeyState(0x1B) -band 0x8000) {
         try { Stop-Process -Id $child.Id -Force } catch {}
         break
     }
 }
+
 
 
 $Transcript = "$((Get-Date).ToString('yyyy-MM-dd-HHmmss'))-Start-OSDCloudLogic.log"
