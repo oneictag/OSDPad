@@ -42,8 +42,9 @@ Write-Host -ForegroundColor Green "Transport Layer Security (TLS) 1.2"
 [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
 #[System.Net.WebRequest]::DefaultWebProxy.Credentials = [System.Net.CredentialCache]::DefaultCredentials
 
-$SplashDir = "X:\OSDCloud\Resources\Splash"   # Ordner mit PNG-Dateien
-Start-ScreenPNGProcess -Directory $SplashDir -Delay 2 -Count 9999
+# Splash
+$SplashPs1 = "X:\Program Files\WindowsPowerShell\Modules\OSD\Resources\SplashScreen\Create-FullScreenBackground.ps1"
+Start-Process -WindowStyle Hidden -FilePath powershell.exe -ArgumentList "-NoProfile -ExecutionPolicy Bypass -File `"$SplashPs1`""
 
 $Transcript = "$((Get-Date).ToString('yyyy-MM-dd-HHmmss'))-Start-OSDCloudLogic.log"
 Start-Transcript -Path (Join-Path "X:\OSDCloud\Logs" $Transcript) -ErrorAction Ignore | Out-Null
