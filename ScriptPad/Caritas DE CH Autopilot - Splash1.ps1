@@ -50,7 +50,13 @@ $SplashPs1 = "X:\Program Files\WindowsPowerShell\Modules\OSD\25.9.16.4\Resources
 # Zum Testen OHNE Hidden, damit du Fehler siehst
 Start-Process powershell.exe -ArgumentList `
   "-NoProfile -ExecutionPolicy Bypass -STA -File `"$SplashPs1`" -DeviceName `"$Dev`""
-
+  
+$Window.Add_KeyDown({
+    param($s, $e)
+    if ($e.Key -eq 'Escape') {
+        $s.Close()
+    }
+})
 
 $Transcript = "$((Get-Date).ToString('yyyy-MM-dd-HHmmss'))-Start-OSDCloudLogic.log"
 Start-Transcript -Path (Join-Path "X:\OSDCloud\Logs" $Transcript) -ErrorAction Ignore | Out-Null
