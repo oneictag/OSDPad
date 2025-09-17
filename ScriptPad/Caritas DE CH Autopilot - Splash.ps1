@@ -43,8 +43,14 @@ Write-Host -ForegroundColor Green "Transport Layer Security (TLS) 1.2"
 #[System.Net.WebRequest]::DefaultWebProxy.Credentials = [System.Net.CredentialCache]::DefaultCredentials
 
 # Splash
-$SplashPs1 = "X:\Program Files\WindowsPowerShell\Modules\OSD\Resources\SplashScreen\Create-FullScreenBackground.ps1"
-Start-Process -WindowStyle Hidden -FilePath powershell.exe -ArgumentList "-NoProfile -ExecutionPolicy Bypass -File `"$SplashPs1`""
+Import-Module OSD -Force
+# Primären Monitor nehmen (liefert z.B. \\.\DISPLAY1)
+$Dev = ([System.Windows.Forms.Screen]::PrimaryScreen).DeviceName
+$SplashPs1 = "X:\Program Files\WindowsPowerShell\Modules\OSD\25.9.16.4\Resources\SplashScreen\Create-FullScreenBackground.ps1"
+# Zum Testen OHNE Hidden, damit du Fehler siehst
+Start-Process powershell.exe -ArgumentList `
+  "-NoProfile -ExecutionPolicy Bypass -STA -File `"$SplashPs1`" -DeviceName `"$Dev`""
+
 
 $Transcript = "$((Get-Date).ToString('yyyy-MM-dd-HHmmss'))-Start-OSDCloudLogic.log"
 Start-Transcript -Path (Join-Path "X:\OSDCloud\Logs" $Transcript) -ErrorAction Ignore | Out-Null
